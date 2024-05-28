@@ -1,6 +1,10 @@
 {
     "name": "catcode-nl/php-code-sniffer-baseliner",
     "description": "Baseline tool which adds a phpcs:ignoreFile to the beginning of php files",
+    "version": "0.0.0",
+    "bin": [
+        "bin/phpcs-baseliner"
+    ],
     "require": {
     }
 }
