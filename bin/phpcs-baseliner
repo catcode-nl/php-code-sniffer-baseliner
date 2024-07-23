@@ -8,17 +8,32 @@ YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Get values
-defaultPath='./app';
-defaultRegex='\.\/*.*\(.php\|.phtml\).*';
+if [ -z "$1" ]; then
+    # If default path isn't set, use phpcs to find all files with errors
+    report=$(eval "phpcs --report=emacs");
 
-echo "find ${defaultPath} -type f -regex '${defaultRegex}'"
-filePaths=$(eval "find ${defaultPath} -type f -regex '${defaultRegex}'")
+    paths=();
+    while read line; do
+        paths+=(${line%%":"*});
+    done <<< "$report"
+    filePaths=${paths[*]};
+else
+    # Get values
+    defaultPath=${1}; # './src'
+    defaultRegex='\.\/*.*\(.php\|.phtml\).*';
+    filePaths=$(eval "find ${defaultPath} -type f -regex '${defaultRegex}'");
+fi
 
 for filePath in ${filePaths}; do
-    if grep -q -v 'phpcs:ignoreFile' "$filePath"; then
+    if ! grep -q 'phpcs:ignoreFile' "$filePath"; then
         # File is not yet fully ignored
-        sed -i '0,/<?php/s//<?php \n\r\/\/ phpcs:ignoreFile baseline/' ${filePath}
+        if grep -q '^<?php' "$filePath"; then
+            # Append ignoreFile to first <?php
+            sed -i '0,/<?php/s//<?php \n\r\/\/ phpcs:ignoreFile baseline \n/' ${filePath};
+        else
+            # Add ignoreFile to first line
+            sed -i '1s/^/<?php \/\/ phpcs:ignoreFile baseline ?>\n\r/' ${filePath};
+        fi
     fi
 done
 
